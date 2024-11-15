@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Processor</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #d5eff7, #def3f7);
+        }
+        .video-container {
+            position: relative;
+            display: inline-block;
+            border: 5px solid #000;
+            margin-top: 20px;
+        }
+        .video-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: black;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    {% load static %}
+
+    <!-- Navbar Snippet -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#" style="font-family: 'Pacifico', cursive;">HINTAS</a>
+      <div class="collapse navbar-collapse justify-content-end">
+        <span class="navbar-text">
+          team building sorters
+        </span>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col">
+                <div class="video-container">
+                    <video id="video" width="640" controls>
+                        <source src="{% static 'video.mp4' %}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="video-label">Drone Video<br><small>30.4383° N, 84.2807° W</small></div>
+                </div>
+                <canvas id="canvas" width="640" style="display: none;"></canvas>
+                <div id="snapshots" class="mt-3 ml-1"></div>
+            </div>
+            <div class="col-3">
+                <h2>Refine The List</h2>
+                <hr>
+                <form id="useCaseForm">
+                    <div class="form-group">
+                      <label for="useCase">Use Case</label>
+                      <select class="form-control" id="useCase" name="useCase">
+                        <option value="" disabled selected>Select Use Case</option>
+                        <option value="emergencyResponse">Emergency Response</option>
+                        <option value="rebuilding">Rebuilding</option>
+                        <option value="housing">Housing</option>
+                      </select>
+                    </div>
+                  
+                    <!-- Emergency Response Fields -->
+                    <div id="emergencyResponseFields" style="display: none;">
+                      <div class="form-group">
+                        <label for="numberOfTeams">Number of Teams</label>
+                        <input type="number" class="form-control" id="numberOfTeams" name="numberOfTeams" min="0">
+                      </div>
+                    </div>
+                  
+                    <!-- Rebuilding Fields -->
+                    <div id="rebuildingFields" style="display: none;">
+                      <div class="form-group">
+                        <label for="resourceEnoughFor">Resource Enough for</label>
+                        <div class="input-group">
+                          <input type="number" class="form-control" id="resourceEnoughFor" name="resourceEnoughFor" min="0">
+                          <div class="input-group-append">
+                            <span class="input-group-text">sq.ft.</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label for="timeRequirement">Time Requirement</label>
+                        <div class="input-group">
+                          <input type="number" class="form-control" id="timeRequirement" name="timeRequirement" min="0">
+                          <div class="input-group-append">
+                            <span class="input-group-text">hours</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  
+                    <!-- Housing Fields -->
+                    <div id="housingFields" style="display: none;">
+                      <div class="form-group">
+                        <label for="currentlyHomeless">Currently Homeless</label>
+                        <input type="number" class="form-control" id="currentlyHomeless" name="currentlyHomeless" min="0">
+                      </div>
+                      <div class="form-group">
+                        <label for="targetOccupancy">Target Occupancy</label>
+                        <div class="input-group">
+                          <input type="number" class="form-control" id="targetOccupancy" name="targetOccupancy" min="0" max="100">
+                          <div class="input-group-append">
+                            <span class="input-group-text">%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                  </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapshotsDiv = document.getElementById('snapshots');
+        const context = canvas.getContext('2d');
+
+        video.addEventListener('loadedmetadata', () => {
+            const aspectRatio = video.videoWidth / video.videoHeight;
+            canvas.width = 320;
+            canvas.height = 320 / aspectRatio;
+        });
+
+        video.addEventListener('play', () => {
+            const interval = setInterval(() => {
+                if (video.paused || video.ended) {
+                    clearInterval(interval);
+                    return;
+                }
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/png');
+
+                // Display snapshot to the user
+                const img = document.createElement('img');
+                img.src = dataURL;
+                snapshotsDiv.appendChild(img);
+
+                // Add the required text below the image
+                const text = document.createElement('div');
+                text.innerHTML = `
+                    Damage Category: Catastrophic 85%<br>
+                    Building Size: Small<br>
+                    GPS: 30.4383° N, 84.2807° W
+                `;
+                snapshotsDiv.appendChild(text);
+
+                // Send snapshot to the server
+                fetch('/upload_snapshot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: 'image=' + encodeURIComponent(dataURL)
+                });
+
+                // Remove the image and text after 10 seconds
+                setTimeout(() => {
+                    snapshotsDiv.removeChild(img);
+                    snapshotsDiv.removeChild(text);
+                }, 10000);
+
+            }, 4000); // 4000 milliseconds = 4 seconds
+        });
+
+    
+        document.getElementById('useCase').addEventListener('change', function () {
+        var useCase = this.value;
+
+        // Hide all fields
+        document.getElementById('emergencyResponseFields').style.display = 'none';
+        document.getElementById('rebuildingFields').style.display = 'none';
+        document.getElementById('housingFields').style.display = 'none';
+
+        // Show fields based on selected use case
+        if (useCase === 'emergencyResponse') {
+        document.getElementById('emergencyResponseFields').style.display = 'block';
+        } else if (useCase === 'rebuilding') {
+        document.getElementById('rebuildingFields').style.display = 'block';
+        } else if (useCase === 'housing') {
+        document.getElementById('housingFields').style.display = 'block';
+        }
+        });
+    </script>
+</body>
+</html>
