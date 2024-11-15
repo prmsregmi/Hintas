@@ -50,7 +50,7 @@
                         <source src="{% static 'video.mp4' %}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
-                    <div class="video-label">Drone Video<br><small>30.4383° N, 84.2807° W</small></div>
+                    <div class="video-label">Drone Video<br><small>{{gps.lat}}° N, {{gps.lon}}° W</small></div>
                 </div>
 
             </div>
@@ -178,7 +178,7 @@
           <div class="col-3" style="height: 600px; overflow-y: auto;">
             <h3>Sorted Log</h3>
             <hr>
-            <ul id="snapshot-list"></ul>
+            <ol id="snapshot-list"></ol>
             
           </div>
         </div>
@@ -261,7 +261,7 @@
 
                 sortedSnapshots.forEach(function(snapshot) {
                     var listItem = document.createElement('li');
-                    listItem.textContent = 'Class: ' + snapshot.class + ', Size: ' + snapshot.size + ', GPS: (' + snapshot.gps[0] + ', ' + snapshot.gps[1] + '), Timestamp: ' + snapshot.timestamp;
+                    listItem.innerHTML = 'GPS: ' + snapshot.gps[0] + ', ' + snapshot.gps[1]  + '<br> Class: ' + snapshot.class + ', Size: ' + snapshot.size;
                     snapshotList.appendChild(listItem);
                 });
 

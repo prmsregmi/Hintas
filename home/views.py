@@ -31,6 +31,7 @@ def index(request):
     }
     initial_gps_json = json.dumps(initial_gps)
     context = {
+        'gps': initial_gps,
         'initial_gps': initial_gps_json,
         'form': form,
     }
