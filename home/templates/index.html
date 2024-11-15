@@ -5,6 +5,9 @@
     <title>Video Processor</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> 
+
     <style>
         body {
             background: linear-gradient(to bottom right, #d5eff7, #def3f7);
@@ -39,18 +42,17 @@
         </span>
       </div>
     </nav>
-    <div class="container">
-        <div class="row mt-5">
+    <div class="container-fluid">
+        <div class="row ml-5 mr-5 mt-4">
             <div class="col">
                 <div class="video-container">
-                    <video id="video" width="640" controls>
+                    <video id="video" width="100%" controls>
                         <source src="{% static 'video.mp4' %}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                     <div class="video-label">Drone Video<br><small>30.4383° N, 84.2807° W</small></div>
                 </div>
-                <canvas id="canvas" width="640" style="display: none;"></canvas>
-                <div id="snapshots" class="mt-3 ml-1"></div>
+
             </div>
             <div class="col-3">
                 <h2>Refine The List</h2>
@@ -117,82 +119,192 @@
                     <button type="submit" class="btn btn-primary">Submit</button>
                   </form>
             </div>
+            <div class="col-1"></div>
+            <div class="col-3">
+              <h3>Drone Simulation Settings</h3>
+              <hr>
+              <form method="post">
+                {% csrf_token %}
+                <!-- Display form errors -->
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                <!-- Render form fields -->
+                 <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                        {{ form.starting_lat.label_tag }}
+                        {{ form.starting_lat }}
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      {{ form.starting_lon.label_tag }}
+                      {{ form.starting_lon }}
+                    </div>
+                  </div>
+                 </div>
+                <div class="form-group">
+                    {{ form.speed_kmh.label_tag }}
+                    {{ form.speed_kmh }}
+                </div>
+                <div class="form-group">
+                    {{ form.direction.label_tag }}
+                    {{ form.direction }}
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+            </div>
+        </div>
+        <div class="row ml-5 mr-5">
+          <div class="col-5">
+            <div id="map" style="height: 600px; margin-top: 20px;"></div>
+          </div>
+
+          <div class="col-4">
+            <canvas id="canvas" width="640" style="display: none;"></canvas>
+            <div id="snapshots" class="mt-3 ml-1 row">
+
+            </div>
+          </div>
+          <div class="col-3" style="height: 600px; overflow-y: auto;">
+            <h3>Sorted Log</h3>
+            <hr>
+            <ul id="snapshot-list"></ul>
+            
+          </div>
+        </div>
+        <div class="row">
         </div>
         
     </div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+   
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const snapshotsDiv = document.getElementById('snapshots');
-        const context = canvas.getContext('2d');
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const snapshotsDiv = document.getElementById('snapshots');
+      const context = canvas.getContext('2d');
+    
+      video.addEventListener('play', () => {
+        const interval = setInterval(() => {
+          if (video.paused || video.ended) {
+            clearInterval(interval);
+            return;
+          }
+          const aspectRatio = video.videoWidth / video.videoHeight;
+          canvas.width = 640; // Set the desired width
+          canvas.height = canvas.width / aspectRatio; // Calculate the height based on the aspect ratio
+    
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataURL = canvas.toDataURL('image/png');
+    
+          // Get current video time
+          const currentTime = video.currentTime;
+    
+          // Display snapshot to the user
+          const img_container = document.createElement('div');
+          img_container.className = 'col';
+          const img = document.createElement('img');
+          img.src = dataURL;
+          img.style.width = '300px'; // Ensure the image fits within its container
+          img_container.appendChild(img);
+          snapshotsDiv.appendChild(img_container);
+    
+          // Send snapshot and time to the server
+          fetch('/upload_snapshot/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'image=' + encodeURIComponent(dataURL) + '&time=' + encodeURIComponent(currentTime)
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              // Display GPS coordinates
+                const gpsInfo = document.createElement('p');
+                gpsInfo.innerHTML = 'Class: ' + data.class + '<br>';
+                gpsInfo.innerHTML += 'Size: ' + data.size + '<br>';
+                gpsInfo.innerHTML += 'GPS: (' + data.gps.lat.toFixed(6) + ', ' + data.gps.lon.toFixed(6) + ')';
+                
+                img_container.appendChild(gpsInfo);
 
-        video.addEventListener('loadedmetadata', () => {
-            const aspectRatio = video.videoWidth / video.videoHeight;
-            canvas.width = 320;
-            canvas.height = 320 / aspectRatio;
-        });
+                // Add a marker to the map at the GPS location
+                var marker = L.marker([data.gps.lat, data.gps.lon]).addTo(map)
+                .bindPopup('<b>Class:</b> ' + data.class + '<br><b>Size:</b> ' + data.size)
+                .openPopup();
 
-        video.addEventListener('play', () => {
-            const interval = setInterval(() => {
-                if (video.paused || video.ended) {
-                    clearInterval(interval);
-                    return;
-                }
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataURL = canvas.toDataURL('image/png');
+                // Adjust the map view to the new marker
+                // map.setView([data.gps.lat, data.gps.lon], 11.5); // Adjust zoom level as needed
 
-                // Display snapshot to the user
-                const img = document.createElement('img');
-                img.src = dataURL;
-                snapshotsDiv.appendChild(img);
 
-                // Add the required text below the image
-                const text = document.createElement('div');
-                text.innerHTML = `
-                    Damage Category: Catastrophic 85%<br>
-                    Building Size: Small<br>
-                    GPS: 30.4383° N, 84.2807° W
-                `;
-                snapshotsDiv.appendChild(text);
+                //Display sorted log
+                var sortedSnapshots = data.sorted_snapshot;
+                console.log(sortedSnapshots)
+                var snapshotList = document.getElementById('snapshot-list');
+                // Clear the snapshot list
+                snapshotList.innerHTML = '';
 
-                // Send snapshot to the server
-                fetch('/upload_snapshot/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: 'image=' + encodeURIComponent(dataURL)
+                // Clear the text content
+                snapshotList.textContent = '';
+
+                sortedSnapshots.forEach(function(snapshot) {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = 'Class: ' + snapshot.class + ', Size: ' + snapshot.size + ', GPS: (' + snapshot.gps[0] + ', ' + snapshot.gps[1] + '), Timestamp: ' + snapshot.timestamp;
+                    snapshotList.appendChild(listItem);
                 });
 
-                // Remove the image and text after 10 seconds
-                setTimeout(() => {
-                    snapshotsDiv.removeChild(img);
-                    snapshotsDiv.removeChild(text);
-                }, 10000);
+              // Remove the image and GPS info after 10 seconds
+              setTimeout(() => {
+                snapshotsDiv.removeChild(img_container);
+              }, 14000);
 
-            }, 4000); // 4000 milliseconds = 4 seconds
-        });
-
+            }
+          });
     
-        document.getElementById('useCase').addEventListener('change', function () {
+        }, 4000); // Capture snapshot every 4 seconds
+      });
+    
+      document.getElementById('useCase').addEventListener('change', function () {
         var useCase = this.value;
-
+    
         // Hide all fields
         document.getElementById('emergencyResponseFields').style.display = 'none';
         document.getElementById('rebuildingFields').style.display = 'none';
         document.getElementById('housingFields').style.display = 'none';
-
+    
         // Show fields based on selected use case
         if (useCase === 'emergencyResponse') {
-        document.getElementById('emergencyResponseFields').style.display = 'block';
+          document.getElementById('emergencyResponseFields').style.display = 'block';
         } else if (useCase === 'rebuilding') {
-        document.getElementById('rebuildingFields').style.display = 'block';
+          document.getElementById('rebuildingFields').style.display = 'block';
         } else if (useCase === 'housing') {
-        document.getElementById('housingFields').style.display = 'block';
+          document.getElementById('housingFields').style.display = 'block';
         }
-        });
+      });
+      var initialGps = JSON.parse('{{ initial_gps|escapejs }}');
+
+      // Initialize the map and set its view to a default location and zoom level
+      var map = L.map('map').setView([initialGps.lat, initialGps.lon], 12.5); // [latitude, longitude], zoom level
+
+      // Add OpenStreetMap tiles as the map layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
     </script>
+
+    <!-- Leaflet JS -->
 </body>
 </html>
