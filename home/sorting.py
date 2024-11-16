@@ -9,9 +9,9 @@ api_key = 'sk-proj-AFeAdwd34T_1xlIMdASU6BTtkVgCBE8cjZEGJO43L61kzxulPWJcnPAQLl7io
 
 
 def process_image(image):
-    _class = random.choice(range(0, 5))
-    _size = random.choice(range(1, 4))
-    return _class, _size
+    # _class = random.choice(range(0, 5))
+    # _size = random.choice(range(1, 4))
+    # return _class, _size
 
     
     headers = {
@@ -27,8 +27,11 @@ def process_image(image):
             "content": [
             {
                 "type": "text",
-                "text": "Analyze the extent of the damage and size of the building in this image of a ruined city. Size should be 1 for small, 2 for medium, and 3 for large.\
-                The extent of the damage should be 0 for No Damage, 1 for Mild, 2 for Moderate, 3 for Severe, and 4 for Destructed. Respond only tuple in the form (damage, size)."
+                "text": "Analyze the extent of the damage and size of the building in this image of a ruined city. Only focus on a particular building in frame. Size should be 1 for small family homes\
+                and cottages, 2 for medium sized apartment buildings, and 3 for really large buildings.\
+                The extent of the damage should be 0 for No Damage, 1 for Mild with broken windows and facade damage, 2 for Moderate damage on partial building damage on one part,\
+                3 is Severe for building that incurred extreme damage but still standing, and 4 is Catastrophic for building completely destroyed beyond any repair or fallen down.\
+                Respond only tuple in the form (damage, size)."
             },
             {
                 "type": "image_url",
