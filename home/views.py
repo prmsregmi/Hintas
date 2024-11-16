@@ -127,7 +127,7 @@ def index(request):
     drone_settings = DroneSettings.load()
     if request.method == 'POST' and 'clear_log' in request.POST:
         redis_client.flushdb()
-        
+
     if request.method == 'POST' and 'emergency' in request.POST:
         print("Emergency")
         latitude = request.POST.get("latitude")
@@ -237,7 +237,7 @@ class Size(Enum):
 class Damage(Enum):
     NONE = 0
     MILD = 1
-    MEDIUM = 2
+    MODERATE = 2
     SEVERE = 3
     CATASTROPHIC = 4
 
