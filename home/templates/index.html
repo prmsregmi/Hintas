@@ -10,13 +10,19 @@
 
     <style>
         body {
-            background: linear-gradient(to bottom right, #d5eff7, #def3f7);
+            height: 100vh;
+            background: linear-gradient(to bottom, #e4eff2, #dcf1f8);
         }
-        .video-container {
+        .video-container{
             position: relative;
             display: inline-block;
             border: 5px solid #000;
             margin-top: 20px;
+            border-radius: 6px;
+        }
+        #map{
+            border: 5px solid #000;
+            border-radius: 6px;
         }
         .video-label {
             position: absolute;
@@ -28,6 +34,9 @@
             font-size: 14px;
             border-radius: 5px;
         }
+        li{
+            margin-bottom: 10px;          
+        }
     </style>
 </head>
 <body>
@@ -35,10 +44,10 @@
 
     <!-- Navbar Snippet -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#" style="font-family: 'Pacifico', cursive;">HINTAS</a>
+      <a class="navbar-brand" href="#" style="font-family: 'Pacifico', cursive; font-size: 30px;">Building Sorters</a>
       <div class="collapse navbar-collapse justify-content-end">
         <span class="navbar-text">
-          team building sorters
+          fun little project
         </span>
       </div>
     </nav>
@@ -54,73 +63,84 @@
                 </div>
 
             </div>
-            <div class="col-3">
-                <h2>Refine The List</h2>
+            <div class="col-4">
+              <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
+                <h2>Multiple Use Cases</h2>
                 <hr>
-                <form id="useCaseForm">
+                <div class="form-group">
+                  <label for="useCase">Sorting Parameters</label>
+                  <select class="form-control" id="useCase" name="useCase">
+                    <option value="emergencyResponse" selected>Emergency Response</option>
+                    <option value="rebuilding">Rebuilding</option>
+                  </select>
+                </div>
+                  
+                <form id="emergencyResponseForm" method="POST">
+                  {% csrf_token %}
+                  <!-- Emergency Response Fields -->
+                  <div id="emergencyResponseFields">
+                    <!-- <div class="form-group">
+                      <label for="numberOfTeams">Number of Teams</label>
+                      <input type="number" class="form-control" id="numberOfTeams" name="numberOfTeams" min="0" value="1">
+                    </div> -->
+                    <p>Starting from</p>
+                    <div class="row">
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="latitude">Latitude</label>
+                          <input type="number" class="form-control" id="latitude" name="latitude" value="{{starting_point.lat}}" step="any">
+                        </div>
+                      </div>
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="longitude">Longitude</label>
+                          <input type="number" class="form-control" id="longitude" name="longitude" value="{{starting_point.lon}}" step="any">
+                        </div>
+                      </div>
+                      </div>
+                      <div class="row">
+                        <div class="col">
+                          <div class="form-group">
+                            <label for="maxrange">Maximum Distance</label>
+                            <div class="input-group">
+                              <input type="number" class="form-control" id="maxrange" name="maxrange" value="{{maxrange}}" step="any">
+                              <div class="input-group-append">
+                                <span class="input-group-text">miles</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col">
+                          <div class="form-group">
+                            <label for="mappoints">Points to Map</label>
+                              <input type="number" class="form-control" id="mappoints" name="mappoints" value="{{mappoints}}" step="any">
+                          </div>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-primary" name="emergency">Submit</button>
+                    </div>
+                </form>
+                  
+                <form id="rebuilding">
+                  <!-- Rebuilding Fields -->
+                  <div id="rebuildingFields" style="display: none;">
                     <div class="form-group">
-                      <label for="useCase">Use Case</label>
-                      <select class="form-control" id="useCase" name="useCase">
-                        <option value="" disabled selected>Select Use Case</option>
-                        <option value="emergencyResponse">Emergency Response</option>
-                        <option value="rebuilding">Rebuilding</option>
-                        <option value="housing">Housing</option>
-                      </select>
-                    </div>
-                  
-                    <!-- Emergency Response Fields -->
-                    <div id="emergencyResponseFields" style="display: none;">
-                      <div class="form-group">
-                        <label for="numberOfTeams">Number of Teams</label>
-                        <input type="number" class="form-control" id="numberOfTeams" name="numberOfTeams" min="0">
-                      </div>
-                    </div>
-                  
-                    <!-- Rebuilding Fields -->
-                    <div id="rebuildingFields" style="display: none;">
-                      <div class="form-group">
-                        <label for="resourceEnoughFor">Resource Enough for</label>
-                        <div class="input-group">
-                          <input type="number" class="form-control" id="resourceEnoughFor" name="resourceEnoughFor" min="0">
-                          <div class="input-group-append">
-                            <span class="input-group-text">sq.ft.</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label for="timeRequirement">Time Requirement</label>
-                        <div class="input-group">
-                          <input type="number" class="form-control" id="timeRequirement" name="timeRequirement" min="0">
-                          <div class="input-group-append">
-                            <span class="input-group-text">hours</span>
-                          </div>
+                      <label for="resourceEnoughFor">Resource Enough for</label>
+                      <div class="input-group">
+                        <input type="number" class="form-control" id="resourceEnoughFor" name="resourceEnoughFor" min="0">
+                        <div class="input-group-append">
+                          <span class="input-group-text">sq.ft.</span>
                         </div>
                       </div>
                     </div>
-                  
-                    <!-- Housing Fields -->
-                    <div id="housingFields" style="display: none;">
-                      <div class="form-group">
-                        <label for="currentlyHomeless">Currently Homeless</label>
-                        <input type="number" class="form-control" id="currentlyHomeless" name="currentlyHomeless" min="0">
-                      </div>
-                      <div class="form-group">
-                        <label for="targetOccupancy">Target Occupancy</label>
-                        <div class="input-group">
-                          <input type="number" class="form-control" id="targetOccupancy" name="targetOccupancy" min="0" max="100">
-                          <div class="input-group-append">
-                            <span class="input-group-text">%</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                  </form>
+                    <button type="submit" class="btn btn-primary" name="rebuilding">Submit</button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <div class="col-1"></div>
-            <div class="col-3">
+          <div class="col-3">
+              <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
               <h3>Drone Simulation Settings</h3>
               <hr>
               <form method="post">
@@ -160,26 +180,45 @@
                     {{ form.direction.label_tag }}
                     {{ form.direction }}
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary" name="drone_simulation">Save</button>
             </form>
             </div>
+          </div>
         </div>
-        <div class="row ml-5 mr-5">
+        <div class="row m-5">
           <div class="col-5">
-            <div id="map" style="height: 600px; margin-top: 20px;"></div>
+            <div id="map" style="height: 600px;"></div>
           </div>
 
           <div class="col-4">
-            <canvas id="canvas" width="640" style="display: none;"></canvas>
-            <div id="snapshots" class="mt-3 ml-1 row">
 
+            <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
+              <h3>Image Snapshots</h3>
+              <hr>
+              <canvas id="canvas" width="640" style="display: none;"></canvas>
+              <div id="snapshots" class="mt-3 ml-1 row">
+              </div>
             </div>
           </div>
           <div class="col-3" style="height: 600px; overflow-y: auto;">
-            <h3>Sorted Log</h3>
-            <hr>
-            <ol id="snapshot-list"></ol>
-            
+            <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
+              <div class="row">
+                <div class="col">
+                  <h3>Sorted Log</h3> 
+                </div>
+                <div class="col-auto">
+                  <button type="button" class="btn btn-primary" onclick="getRoute()">Generate Route</button>
+                </div>
+                <div class="col-auto">
+                <form method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger" name="clear_log">Clear Log</button>
+                </form>
+                </div>
+              </div>
+              <hr>
+              <ol id="snapshot-list"></ol>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -190,6 +229,30 @@
 
    
     <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var sortedSnapshots = JSON.parse('{{ sorted_snapshot|escapejs  }}');
+        displaySortedLog(sortedSnapshots);
+      });
+
+      // Define the function
+      function displaySortedLog(sortedSnapshots) {
+          var snapshotList = document.getElementById('snapshot-list');
+          
+          // Clear the snapshot list
+          snapshotList.innerHTML = '';
+
+          // Iterate over each snapshot and create list items
+          sortedSnapshots.forEach(function(snapshot) {
+              var listItem = document.createElement('li');
+              listItem.innerHTML = 'GPS: ' + snapshot.gps[0] + ', ' + snapshot.gps[1]  + '<br> Damage: ' + snapshot.class + ', Size: ' + snapshot.size + '<br>' + 'Score: ' + snapshot.score;
+              snapshotList.appendChild(listItem);
+
+              var marker = L.marker([snapshot.gps[0], snapshot.gps[1]]).addTo(map)
+                .bindPopup('<b>Damage:</b> ' + snapshot.class + '<br><b>Size:</b> ' + snapshot.size)
+                .openPopup();
+          }); 
+      }
+      
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
       const snapshotsDiv = document.getElementById('snapshots');
@@ -234,7 +297,7 @@
             if (data.status === 'success') {
               // Display GPS coordinates
                 const gpsInfo = document.createElement('p');
-                gpsInfo.innerHTML = 'Class: ' + data.class + '<br>';
+                gpsInfo.innerHTML = 'Damage: ' + data.class + '<br>';
                 gpsInfo.innerHTML += 'Size: ' + data.size + '<br>';
                 gpsInfo.innerHTML += 'GPS: (' + data.gps.lat.toFixed(6) + ', ' + data.gps.lon.toFixed(6) + ')';
                 
@@ -242,29 +305,14 @@
 
                 // Add a marker to the map at the GPS location
                 var marker = L.marker([data.gps.lat, data.gps.lon]).addTo(map)
-                .bindPopup('<b>Class:</b> ' + data.class + '<br><b>Size:</b> ' + data.size)
+                .bindPopup('<b>Damage:</b> ' + data.class + '<br><b>Size:</b> ' + data.size)
                 .openPopup();
 
                 // Adjust the map view to the new marker
                 // map.setView([data.gps.lat, data.gps.lon], 11.5); // Adjust zoom level as needed
 
-
-                //Display sorted log
-                var sortedSnapshots = data.sorted_snapshot;
-                console.log(sortedSnapshots)
-                var snapshotList = document.getElementById('snapshot-list');
-                // Clear the snapshot list
-                snapshotList.innerHTML = '';
-
-                // Clear the text content
-                snapshotList.textContent = '';
-
-                sortedSnapshots.forEach(function(snapshot) {
-                    var listItem = document.createElement('li');
-                    listItem.innerHTML = 'GPS: ' + snapshot.gps[0] + ', ' + snapshot.gps[1]  + '<br> Class: ' + snapshot.class + ', Size: ' + snapshot.size;
-                    snapshotList.appendChild(listItem);
-                });
-
+                displaySortedLog(data.sorted_snapshot);
+                
               // Remove the image and GPS info after 10 seconds
               setTimeout(() => {
                 snapshotsDiv.removeChild(img_container);
@@ -282,29 +330,85 @@
         // Hide all fields
         document.getElementById('emergencyResponseFields').style.display = 'none';
         document.getElementById('rebuildingFields').style.display = 'none';
-        document.getElementById('housingFields').style.display = 'none';
     
         // Show fields based on selected use case
         if (useCase === 'emergencyResponse') {
           document.getElementById('emergencyResponseFields').style.display = 'block';
-        } else if (useCase === 'rebuilding') {
+        } else {
           document.getElementById('rebuildingFields').style.display = 'block';
-        } else if (useCase === 'housing') {
-          document.getElementById('housingFields').style.display = 'block';
         }
       });
       var initialGps = JSON.parse('{{ initial_gps|escapejs }}');
 
       // Initialize the map and set its view to a default location and zoom level
-      var map = L.map('map').setView([initialGps.lat, initialGps.lon], 12.5); // [latitude, longitude], zoom level
+      var map = L.map('map').setView([initialGps.lat, initialGps.lon], 14); // [latitude, longitude], zoom level
 
       // Add OpenStreetMap tiles as the map layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
+      L.circle(['{{starting_point.lat}}', '{{starting_point.lon}}'], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.5,
+        radius: 150 // Adjust the radius as needed
+    }).addTo(map);
+
+
+    function getRoute() {
+        // Prepare data to send
+        var data = {};
+
+        fetch('/get_route/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // 'X-CSRFToken': getCookie('csrftoken') // Uncomment if CSRF token is required
+          },
+          body: data
+        })
+        .then(response => response.json())
+        .then(data => {
+
+          if (data.map_list) {
+            // Plot the route on the map
+            var latlngs = data.map_list; // An array of [lat, lon] arrays
+            
+            // Create a polyline from the GPS points
+            var polyline = L.polyline(latlngs, {color: 'blue'}).addTo(map);
+            
+            // Zoom the map to fit the polyline
+            map.fitBounds(polyline.getBounds());
+            
+            // Optionally, add markers at each point
+            // latlngs.forEach(function(point) {
+            //   L.marker(point).addTo(map);
+            // });
+
+            latlngs.forEach(function(point, index) {
+              console.log(point, index);
+              const numberedIcon = L.divIcon({
+                  className: 'numbered-icon',
+                  html: `<div style="text-align:center; font-size:12px; background-color:white; border:1px solid black; border-radius:50%; width:24px; height:24px; line-height:24px;">${index + 1}</div>`,
+                  iconSize: [30, 30],
+                  iconAnchor: [25, 25]
+              });
+
+              L.marker(point, { icon: numberedIcon }).addTo(map);
+          });
+          } else if (data.error) {
+            console.error('Error:', data.error);
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+      }
+
     </script>
 
     <!-- Leaflet JS -->
 </body>
 </html>
+```
