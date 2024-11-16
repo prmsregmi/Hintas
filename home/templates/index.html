@@ -192,7 +192,7 @@
 
           <div class="col-4">
 
-            <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
+            <div class=" border py-4 px-3" style="height: 100%; border-radius: 5px;">
               <h3>Image Snapshots</h3>
               <hr>
               <canvas id="canvas" width="640" style="display: none;"></canvas>
@@ -201,12 +201,12 @@
             </div>
           </div>
           <div class="col-3" style="height: 600px; overflow-y: auto;">
-            <div class=" border py-4 px-5" style="height: 100%; border-radius: 5px;">
+            <div class=" border py-4 px-4" style="height: 100%; border-radius: 5px;">
               <div class="row">
                 <div class="col">
                   <h3>Sorted Log</h3> 
                 </div>
-                <div class="col-auto">
+                <div class="col-auto px-0">
                   <button type="button" class="btn btn-primary" onclick="getRoute()">Generate Route</button>
                 </div>
                 <div class="col-auto">
@@ -244,7 +244,7 @@
           // Iterate over each snapshot and create list items
           sortedSnapshots.forEach(function(snapshot) {
               var listItem = document.createElement('li');
-              listItem.innerHTML = 'GPS: ' + snapshot.gps[0] + ', ' + snapshot.gps[1]  + '<br> Damage: ' + snapshot.class + ', Size: ' + snapshot.size + '<br>' + 'Score: ' + snapshot.score;
+              listItem.innerHTML = 'GPS: ' + snapshot.gps[0] + ', ' + snapshot.gps[1]  + '<br> Damage: ' + snapshot.class + ', Size: ' + snapshot.size + '<br><b>' + 'Score: ' + snapshot.score + '</b>';
               snapshotList.appendChild(listItem);
 
               var marker = L.marker([snapshot.gps[0], snapshot.gps[1]]).addTo(map)
@@ -279,7 +279,7 @@
           img_container.className = 'col';
           const img = document.createElement('img');
           img.src = dataURL;
-          img.style.width = '300px'; // Ensure the image fits within its container
+          img.style.width = '250px'; // Ensure the image fits within its container
           img_container.appendChild(img);
           snapshotsDiv.appendChild(img_container);
     
