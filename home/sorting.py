@@ -4,10 +4,6 @@ import requests
 import ast
 
 
-openai.api_key = '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'
-api_key = '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'
-
-
 def process_image(image):
     # _class = random.choice(range(0, 5))
     # _size = random.choice(range(1, 4))
